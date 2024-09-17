@@ -1,7 +1,7 @@
 {
   "name": "web_project_around_express",
   "version": "1.0.0",
-  "description": "",
+  "description": "Proyecto número 13, crear un servidor con una API y autenticación del usuario.",
   "main": "index.js",
   "scripts": {
     "lint": "npx eslint .",
