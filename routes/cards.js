@@ -10,7 +10,9 @@ router.get("/", (req, res) => {
     "utf8",
     (err, data) => {
       if (err) {
-        res.status(500).send({ message: "Error reading cards data" });
+        res
+          .status(500)
+          .send({ message: "Error leyendo la informacion de las cartas" });
       } else {
         res.send(JSON.parse(data));
       }

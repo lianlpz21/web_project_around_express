@@ -10,9 +10,9 @@ app.use("/users", usersRouter);
 app.use("/cards", cardsRouter);
 
 app.use((req, res) => {
-  res.status(404).send({ message: "Requested resource not found" });
+  res.status(404).send({ message: "Ruta no encontrada..." });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Servidor está corriendo en puerto: ${PORT}`);
 });

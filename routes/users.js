@@ -10,7 +10,9 @@ router.get("/", (req, res) => {
     "utf8",
     (err, data) => {
       if (err) {
-        res.status(500).send({ message: "Error reading users data" });
+        res
+          .status(500)
+          .send({ message: "Error leyendo información del usuario" });
       } else {
         res.send(JSON.parse(data));
       }
@@ -25,14 +27,16 @@ router.get("/:id", (req, res) => {
     "utf8",
     (err, data) => {
       if (err) {
-        res.status(500).send({ message: "Error reading users data" });
+        res
+          .status(500)
+          .send({ message: "Error leyendo información del usuario" });
       } else {
         const users = JSON.parse(data);
         const user = users.find((user) => user._id === id);
         if (user) {
           res.send(user);
         } else {
-          res.status(404).send({ message: "User ID not found" });
+          res.status(404).send({ message: "ID de usuario no encontrado" });
         }
       }
     }
