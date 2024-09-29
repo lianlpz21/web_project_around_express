@@ -4,18 +4,18 @@ const fs = require("fs");
 
 const router = express.Router();
 
+// Obtener todas las cartas
 router.get("/", (req, res) => {
   fs.readFile(
-    path.join(__dirname, "data", "cards.json"),
+    path.join(__dirname, "../data/cards.json"),
     "utf8",
     (err, data) => {
       if (err) {
-        res
+        return res
           .status(500)
-          .send({ message: "Error leyendo la informacion de las cartas" });
-      } else {
-        res.send(JSON.parse(data));
+          .send({ message: "Error leyendo información de las cartas" });
       }
+      res.send(JSON.parse(data));
     }
   );
 });
