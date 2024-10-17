@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-// Expresión regular para validar los enlaces de imágenes (similar al campo avatar en user)
+// Expresión regular para validar los enlaces de imágenes (similar al campo avatar en User)
 const linkRegex =
   /^(http:\/\/|https:\/\/)(www\.)?[a-zA-Z0-9-._~:/?%#\[\]@!$&'()*+,;=]+$/;
 
@@ -27,12 +27,12 @@ const cardSchema = new Schema({
   },
   owner: {
     type: Schema.Types.ObjectId,
-    ref: "user",
+    ref: "User",
     required: true,
   },
   likes: {
     type: [Schema.Types.ObjectId],
-    ref: "user",
+    ref: "User",
     default: [],
   },
   createdAt: {

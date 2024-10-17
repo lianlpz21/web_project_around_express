@@ -30,7 +30,6 @@ const getUserById = async (req, res) => {
 
 // POST /users — crea un nuevo usuario
 const createUser = async (req, res) => {
-  console.log("error", req.body);
   const { name, about, avatar } = req.body;
 
   try {

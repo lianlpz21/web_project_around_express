@@ -1,97 +1,131 @@
 const express = require("express");
-const path = require("path");
-const fs = require("fs");
-
 const router = express.Router();
+const User = require("../models/user");
+const Card = require("../models/card");
 
 // Obtener todos los usuarios
-router.get("/", (req, res) => {
-  fs.readFile(
-    path.join(__dirname, "../data/users.json"),
-    "utf8",
-    (err, data) => {
-      if (err) {
-        return res
-          .status(500)
-          .send({ message: "Error leyendo información de los usuarios" });
-      }
-      res.send(JSON.parse(data));
-    }
-  );
+router.get("/", async (req, res) => {
+  try {
+    const users = await User.find();
+    res.send(users);
+  } catch (err) {
+    res.status(500).send({ message: "Error al obtener usuarios" });
+  }
 });
 
 // Obtener un usuario por ID
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
-  fs.readFile(
-    path.join(__dirname, "../data/users.json"),
-    "utf8",
-    (err, data) => {
-      if (err) {
-        return res
-          .status(500)
-          .send({ message: "Error leyendo información de los usuarios" });
-      }
-      const users = JSON.parse(data);
-      const user = users.find((user) => user._id === id);
-      if (user) {
-        res.send(user);
-      } else {
-        res.status(404).send({ message: "ID de usuario no encontrado" });
-      }
-    }
-  );
+router.get("/:userId", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).orFail(() => {
+      const error = new Error("Usuario no encontrado");
+      error.statusCode = 404;
+      throw error;
+    });
+    res.send(user);
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).send({ message: err.message });
+  }
 });
 
 // Crear un nuevo usuario
-router.post("/", (req, res) => {
-  console.log("error", req.body);
+router.post("/", async (req, res) => {
   const { name, about, avatar } = req.body;
 
-  // Verificar si los campos están completos
   if (!name || !about || !avatar) {
     return res.status(400).send({ message: "Faltan campos requeridos" });
   }
 
-  // Leer los usuarios actuales desde el archivo
-  fs.readFile(
-    path.join(__dirname, "../data/users.json"),
-    "utf8",
-    (err, data) => {
-      if (err) {
-        return res
-          .status(500)
-          .send({ message: "Error leyendo información de los usuarios" });
-      }
+  try {
+    const user = new User({ name, about, avatar });
+    await user.save();
+    res.status(201).send(user);
+  } catch (err) {
+    const statusCode = err.name === "ValidationError" ? 400 : 500;
+    res.status(statusCode).send({ message: err.message });
+  }
+});
 
-      const users = JSON.parse(data);
+// Actualizar el perfil del usuario
+router.patch("/me", async (req, res) => {
+  const { name, about } = req.body;
 
-      // Crear un nuevo ID (puedes usar un generador de IDs más sofisticado en una base de datos real)
-      const newUser = {
-        _id: (users.length + 1).toString(), // Genera un nuevo ID basado en el tamaño actual del array
-        name,
-        about,
-        avatar,
-      };
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, about },
+      { new: true, runValidators: true }
+    ).orFail(() => {
+      const error = new Error("Usuario no encontrado");
+      error.statusCode = 404;
+      throw error;
+    });
+    res.send(user);
+  } catch (err) {
+    const statusCode =
+      err.statusCode || (err.name === "ValidationError" ? 400 : 500);
+    res.status(statusCode).send({ message: err.message });
+  }
+});
 
-      // Agregar el nuevo usuario al array de usuarios
-      users.push(newUser);
+// Actualizar el avatar del usuario
+router.patch("/me/avatar", async (req, res) => {
+  const { avatar } = req.body;
 
-      // Guardar el archivo actualizado
-      fs.writeFile(
-        path.join(__dirname, "../data/users.json"),
-        JSON.stringify(users, null, 2),
-        (err) => {
-          if (err) {
-            return res.status(500).send({
-              message: "Error guardando el nuevo usuario en el archivo",
-            });
-          }
-          res.status(201).send(newUser); // Devolver el nuevo usuario creado
-        }
-      );
-    }
-  );
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar },
+      { new: true, runValidators: true }
+    ).orFail(() => {
+      const error = new Error("Usuario no encontrado");
+      error.statusCode = 404;
+      throw error;
+    });
+    res.send(user);
+  } catch (err) {
+    const statusCode =
+      err.statusCode || (err.name === "ValidationError" ? 400 : 500);
+    res.status(statusCode).send({ message: err.message });
+  }
+});
+
+// Dar like a una tarjeta
+router.put("/cards/:cardId/likes", async (req, res) => {
+  try {
+    const card = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $addToSet: { likes: req.user._id } }, // Agrega _id al array si aún no está ahí
+      { new: true }
+    ).orFail(() => {
+      const error = new Error("Tarjeta no encontrada");
+      error.statusCode = 404;
+      throw error;
+    });
+    res.send(card);
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).send({ message: err.message });
+  }
+});
+
+// Dar unlike a una tarjeta
+router.delete("/cards/:cardId/likes", async (req, res) => {
+  try {
+    const card = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $pull: { likes: req.user._id } }, // Elimina _id del array
+      { new: true }
+    ).orFail(() => {
+      const error = new Error("Tarjeta no encontrada");
+      error.statusCode = 404;
+      throw error;
+    });
+    res.send(card);
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).send({ message: err.message });
+  }
 });
 
 module.exports = router;
